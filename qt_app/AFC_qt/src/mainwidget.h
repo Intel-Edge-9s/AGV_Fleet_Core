@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "tab1.h"
+#include "tab2.h"
 #include "rosnode.h"
 
 QT_BEGIN_NAMESPACE
@@ -20,6 +21,7 @@ public:
 private:
     Ui::MainWidget *ui;
     Tab1 *m_tab1;
+    Tab2 *m_tab2;
     RosNode *m_rosNode;
 };
 #endif // MAINWIDGET_H

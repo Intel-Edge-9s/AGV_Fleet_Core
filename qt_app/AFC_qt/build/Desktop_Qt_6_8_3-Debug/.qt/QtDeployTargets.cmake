@@ -1,2 +1,0 @@
-set(__QT_DEPLOY_TARGET_turtlebot_node_FILE /home/ubuntu/qtExamples/qt_app/AFC_qt/build/Desktop_Qt_6_8_3-Debug/turtlebot_node)
-set(__QT_DEPLOY_TARGET_turtlebot_node_TYPE EXECUTABLE)

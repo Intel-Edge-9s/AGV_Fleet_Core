@@ -15,6 +15,14 @@ find_package(sensor_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+# 사용할 Qt 컴포넌트
+find_package(Qt6 REQUIRED COMPONENTS
+    Core
+    Gui
+    Widgets
+    Sql
+    Charts
+)
 
 # Set Qt
 set(CMAKE_AUTOMOC on)
@@ -42,6 +50,8 @@ add_executable(turtlebot_node
   src/simulation.cpp
   src/navi.h
   src/navi.cpp
+  src/mapwidget.h src/mapwidget.cpp
+  src/lidarwidget.h src/lidarwidget.cpp
 )
 
 ament_target_dependencies(turtlebot_node
@@ -59,7 +69,15 @@ target_include_directories(turtlebot_node PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(turtlebot_node Qt6::Widgets)
+# Qt6 라이브러리 링크
+target_link_libraries(turtlebot_node
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    Qt6::Sql
+    Qt6::Charts
+)
+
 
 # install
 install(TARGETS

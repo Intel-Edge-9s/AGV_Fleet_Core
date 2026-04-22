@@ -17,8 +17,11 @@ class Tab1 : public QWidget {
 public:
     explicit Tab1(QWidget *parent = nullptr);
     ~Tab1();
+
     void setRosNode(RosNode* node);
-    void updateBatteryStatus(int percentage, double voltage);
+    void on_robotPoseReceived(const QString& robotID, int gridX, int gridY);
+    void on_lidarDataReceived(const std::vector<float>& ranges, float angle_min, float angle_increment);
+    void updateBatteryStatus(const QString& robotID, int percentage, double voltage);
 
 private slots:
     void sendVelocityCommand();
@@ -29,7 +32,10 @@ private slots:
     void on_pPBStop_clicked();
     void on_pPBServo0_clicked();
     void on_pPBServo30_clicked();
+
+    // 자율주행 모드 제어
     void on_btnStart_clicked();
+    void on_btnStopNavi_clicked();
     void on_cbDest_currentTextChanged(const QString &text);
 
 private:

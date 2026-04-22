@@ -1,69 +1,68 @@
 #include "rosnode.h"
 
-// ======= [생성자] =======
 RosNode::RosNode() : rclcpp::Node("qt_ros_node")
 {
     auto qos_reliable = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();
-    auto qos_vel      = rclcpp::QoS(10);
+    auto qos_vel = rclcpp::QoS(10);
 
-    // ======= [Publisher 초기화] =======
-    // 터틀봇A
-    cmd_vel_pub_a_ = create_publisher<geometry_msgs::msg::Twist>("/tb3_a/cmd_vel", qos_vel);
-    servo_pub_a_   = create_publisher<std_msgs::msg::Int32>("/tb3_a/servo_angle", qos_reliable);
+    // 로봇 A와 B의 네임스페이스를 분리하여 Publisher 생성
+    servo_pub_a_ = this->create_publisher<std_msgs::msg::Int32>("/robot_a/servo_angle", qos_reliable);
+    cmd_vel_pub_a_ = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", qos_vel);
 
-    // 터틀봇B
-    cmd_vel_pub_b_ = create_publisher<geometry_msgs::msg::Twist>("/tb3_b/cmd_vel", qos_vel);
-    servo_pub_b_   = create_publisher<std_msgs::msg::Int32>("/tb3_b/servo_angle", qos_reliable);
+    servo_pub_b_ = this->create_publisher<std_msgs::msg::Int32>("/robot_b/servo_angle", qos_reliable);
+    cmd_vel_pub_b_ = this->create_publisher<geometry_msgs::msg::Twist>("/robot_b/cmd_vel", qos_vel);
 
-    // ======= [Subscriber 초기화] =======
-    // 터틀봇A 배터리 상태 구독 → batteryUpdated 시그널 emit
-    battery_sub_a_ = create_subscription<sensor_msgs::msg::BatteryState>(
-        "/tb3_a/battery_state", 10,
-        [this](const sensor_msgs::msg::BatteryState::SharedPtr msg) {
-            int percentage = (int)(msg->percentage * 100);
-            emit batteryUpdated(percentage, msg->voltage);
-        });
+    // 배터리 Subscriber 생성
+    battery_sub_a_ = this->create_subscription<sensor_msgs::msg::BatteryState>(
+        "/robot_a/battery_state", 10, std::bind(&RosNode::battery_callback_a, this, std::placeholders::_1));
+
+    battery_sub_b_ = this->create_subscription<sensor_msgs::msg::BatteryState>(
+        "/robot_b/battery_state", 10, std::bind(&RosNode::battery_callback_b, this, std::placeholders::_1));
 }
 
-// ======= [소멸자] =======
-RosNode::~RosNode() {}
+RosNode::~RosNode()
+{
+}
 
-// ======= [ROS2 스핀 스레드] =======
-void RosNode::run() {
-    if (rclcpp::ok())
+void RosNode::run()
+{
+    if (rclcpp::ok()) {
         rclcpp::spin(this->get_node_base_interface());
+    }
 }
 
-// ======= [이동 명령] =======
-void RosNode::move_robot_a(double linear, double angular) {
+void RosNode::publish_servo(const std::string& robot_name, int angle)
+{
     if (!rclcpp::ok()) return;
-    geometry_msgs::msg::Twist msg;
-    msg.linear.x  = linear;
-    msg.angular.z = angular;
-    cmd_vel_pub_a_->publish(msg);
-}
 
-void RosNode::move_robot_b(double linear, double angular) {
-    if (!rclcpp::ok()) return;
-    geometry_msgs::msg::Twist msg;
-    msg.linear.x  = linear;
-    msg.angular.z = angular;
-    cmd_vel_pub_b_->publish(msg);
-}
-
-// ======= [서보 명령] =======
-void RosNode::publish_servo_a(int angle) {
-    if (!rclcpp::ok()) return;
     std_msgs::msg::Int32 msg;
     msg.data = angle;
-    servo_pub_a_->publish(msg);
-    RCLCPP_INFO(this->get_logger(), "Servo A Command Sent: %d degrees", angle);
+
+    if (robot_name == "robot_a" && servo_pub_a_) servo_pub_a_->publish(msg);
+    else if (robot_name == "robot_b" && servo_pub_b_) servo_pub_b_->publish(msg);
+
+    RCLCPP_INFO(this->get_logger(), "Servo Command Sent: %d degrees", angle);
 }
 
-void RosNode::publish_servo_b(int angle) {
+void RosNode::move_robot(const std::string& robot_name, double linear, double angular)
+{
     if (!rclcpp::ok()) return;
-    std_msgs::msg::Int32 msg;
-    msg.data = angle;
-    servo_pub_b_->publish(msg);
-    RCLCPP_INFO(this->get_logger(), "Servo B Command Sent: %d degrees", angle);
+
+    geometry_msgs::msg::Twist msg;
+    msg.linear.x = linear;
+    msg.angular.z = angular;
+
+    if (robot_name == "robot_a" && cmd_vel_pub_a_) cmd_vel_pub_a_->publish(msg);
+    else if (robot_name == "robot_b" && cmd_vel_pub_b_) cmd_vel_pub_b_->publish(msg);
+}
+
+// 배터리 콜백 함수 구현
+void RosNode::battery_callback_a(const sensor_msgs::msg::BatteryState::SharedPtr msg) {
+    if (std::isnan(msg->percentage)) return;
+    emit batteryUpdated("A", static_cast<int>(msg->percentage), msg->voltage);
+}
+
+void RosNode::battery_callback_b(const sensor_msgs::msg::BatteryState::SharedPtr msg) {
+    if (std::isnan(msg->percentage)) return;
+    emit batteryUpdated("B", static_cast<int>(msg->percentage), msg->voltage);
 }
