@@ -57,7 +57,7 @@ void Tab2::setupDatabase() {
         db = QSqlDatabase::addDatabase("QMARIADB");
     }
 
-    db.setHostName("127.0.0.1");
+    db.setHostName("10.10.16.76");
     db.setDatabaseName("amr_turtle_db");
     db.setUserName("iot");
     db.setPassword("pwiot");

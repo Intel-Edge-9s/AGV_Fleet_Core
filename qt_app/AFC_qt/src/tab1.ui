@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1146</width>
-    <height>920</height>
+    <width>1370</width>
+    <height>930</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>10</y>
+     <x>10</x>
+     <y>20</y>
      <width>541</width>
      <height>871</height>
     </rect>
@@ -62,8 +62,8 @@
   <widget class="QGroupBox" name="groupBattery">
    <property name="geometry">
     <rect>
-     <x>590</x>
-     <y>700</y>
+     <x>570</x>
+     <y>710</y>
      <width>521</width>
      <height>181</height>
     </rect>
@@ -135,8 +135,8 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>590</x>
-     <y>250</y>
+     <x>570</x>
+     <y>260</y>
      <width>521</width>
      <height>451</height>
     </rect>
@@ -249,8 +249,8 @@
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>591</x>
-     <y>11</y>
+     <x>571</x>
+     <y>21</y>
      <width>521</width>
      <height>231</height>
     </rect>
@@ -258,7 +258,7 @@
    <property name="title">
     <string>자율주행 모드</string>
    </property>
-   <widget class="QWidget" name="layoutWidget_2">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>12</x>

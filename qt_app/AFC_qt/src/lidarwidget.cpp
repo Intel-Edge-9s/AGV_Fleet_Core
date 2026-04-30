@@ -1,100 +1,177 @@
 #include "lidarwidget.h"
 
+#include <QPaintEvent>
+#include <QRadialGradient>
+#include <QConicalGradient>
+#include <algorithm>
+#include <cmath>
+#include <QPainter>
+#include <QPen>
+#include <QColor>
+#include <QFont>
+
 LidarWidget::LidarWidget(QWidget *parent) : QWidget(parent)
 {
     // 배경을 더 깊은 검은색으로 설정하여 효과 극대화
     setAttribute(Qt::WA_StyledBackground, true);
-    setStyleSheet("background-color: #050505; border: 2px solid #3e3e4e; border-radius: 5px;");
+    setStyleSheet(
+        "background-color: #050505; "
+        "border: 2px solid #3e3e4e; "
+        "border-radius: 5px;"
+        );
 
     sweepAngle = 0.0f;
     auraPulse = 0.0f;
 
     // 60FPS 애니메이션 타이머 설정
     animationTimer = new QTimer(this);
-    connect(animationTimer, &QTimer::timeout, this, [this](){
-        // 스캔 빔 회전 (초당 약 1바퀴 속도)
-        sweepAngle += 6.0f;
-        if (sweepAngle >= 360.0f) sweepAngle = 0.0f;
 
-        // 맥박(Aura) 효과를 위한 Sine 함수 계산
+    connect(animationTimer, &QTimer::timeout, this, [this]() {
+        // 스캔 빔 회전
+        sweepAngle += 6.0f;
+        if (sweepAngle >= 360.0f) {
+            sweepAngle -= 360.0f;
+        }
+
+        // 맥박 효과
         static float time = 0.0f;
         time += 0.1f;
-        auraPulse = (sin(time) + 1.0f) / 2.0f; // 0.0 ~ 1.0 사이 값 반복
+        auraPulse = (std::sin(time) + 1.0f) / 2.0f;
 
-        update(); // 화면 갱신 호출 (paintEvent 실행)
+        update();
     });
-    animationTimer->start(16); // 약 16ms 주기로 실행
+
+    animationTimer->start(16);
 }
 
 void LidarWidget::setScanData(const std::vector<LidarPoint>& newData)
 {
-    scanData = newData;
-    // update()는 타이머에서 주기적으로 호출되므로 여기서는 생략 가능하지만, 데이터 수신 즉시 반응을 원하면 남겨두어도 좋다.
+    scanData.clear();
+    scanData.reserve(newData.size());
+
+    for (const auto& point : newData) {
+        // 유효하지 않은 range 제거
+        if (!std::isfinite(point.range)) {
+            continue;
+        }
+
+        if (point.range <= 0.05f || point.range > maxRange) {
+            continue;
+        }
+
+        if (!std::isfinite(point.angle)) {
+            continue;
+        }
+
+        scanData.push_back(point);
+    }
+
+    // 데이터 수신 즉시 한 번 갱신
+    update();
 }
 
 void LidarWidget::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event);
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    // 위젯 중심을 (0,0)으로 이동
-    int centerX = width() / 2;
-    int centerY = height() / 2;
+    const int widgetWidth = width();
+    const int widgetHeight = height();
+
+    if (widgetWidth <= 2 || widgetHeight <= 2) {
+        return;
+    }
+
+    // 위젯 중심을 원점으로 이동
+    const int centerX = widgetWidth / 2;
+    const int centerY = widgetHeight / 2;
     painter.translate(centerX, centerY);
 
-    // 스케일 계산 (maxRange가 5m일 때 위젯 크기에 맞춤)
-    float scale = (float)width() / (maxRange * 2);
+    // width만 쓰면 화면 비율에 따라 원이 잘릴 수 있으므로 짧은 변 기준 사용
+    const float drawableRadius = static_cast<float>(std::min(widgetWidth, widgetHeight)) * 0.45f;
+    const float scale = drawableRadius / maxRange;
 
+    // ---------------------------------------------------------
+    // 1. 배경 아우라
+    // ---------------------------------------------------------
+    const float auraRadius = drawableRadius * 0.95f;
 
-    // 배경 아우라 (Pulsing Aura) - 은은하게 깜빡이는 효과
-    float auraRadius = maxRange * scale * 0.9f;
     QRadialGradient auraGradient(0, 0, auraRadius);
 
-    // auraPulse에 따라 투명도(Alpha)를 20 ~ 60 사이로 조절
-    int alphaValue = 20 + (int)(40 * auraPulse);
-    auraGradient.setColorAt(0.0, QColor(0, 255, 255, alphaValue)); // 중심: 민트색
-    auraGradient.setColorAt(1.0, QColor(0, 255, 255, 0));          // 가장자리: 투명
+    int alphaValue = 20 + static_cast<int>(40.0f * auraPulse);
+    auraGradient.setColorAt(0.0, QColor(0, 255, 255, alphaValue));
+    auraGradient.setColorAt(0.7, QColor(0, 180, 220, alphaValue / 3));
+    auraGradient.setColorAt(1.0, QColor(0, 255, 255, 0));
 
     painter.setBrush(auraGradient);
     painter.setPen(Qt::NoPen);
     painter.drawEllipse(QPointF(0, 0), auraRadius, auraRadius);
 
-    // 2. 회전하는 스캔 빔 (Sweep Beam) - 레이더 회전 효과
-    // QConicalGradient는 시계 반대방향이 기본이므로 -sweepAngle 사용
+    // ---------------------------------------------------------
+    // 2. 회전하는 스캔 빔
+    // ---------------------------------------------------------
     QConicalGradient sweepGradient(0, 0, -sweepAngle);
-    sweepGradient.setColorAt(0.0, QColor(0, 255, 255, 120)); // 선두 부분 (밝음)
-    sweepGradient.setColorAt(0.1, QColor(0, 255, 255, 40));  // 중간 부분 (잔상)
-    sweepGradient.setColorAt(0.2, QColor(0, 255, 255, 0));   // 꼬리 부분 (투명)
+    sweepGradient.setColorAt(0.00, QColor(0, 255, 255, 130));
+    sweepGradient.setColorAt(0.04, QColor(0, 255, 255, 80));
+    sweepGradient.setColorAt(0.12, QColor(0, 255, 255, 25));
+    sweepGradient.setColorAt(0.20, QColor(0, 255, 255, 0));
 
     painter.setBrush(sweepGradient);
     painter.setPen(Qt::NoPen);
-    painter.drawEllipse(QPointF(0, 0), maxRange * scale, maxRange * scale);
+    painter.drawEllipse(QPointF(0, 0), drawableRadius, drawableRadius);
 
-
-    // 가이드라인 (Grid) - 1m 단위 동심원
+    // ---------------------------------------------------------
+    // 3. 거리 가이드라인
+    // ---------------------------------------------------------
     painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QColor("#333333"), 1, Qt::DotLine));
-    for (int r = 1; r <= (int)maxRange; ++r) {
-        painter.drawEllipse(QPointF(0, 0), r * scale, r * scale);
+    painter.setPen(QPen(QColor(0x33, 0x33, 0x33), 1, Qt::DotLine));
+
+    for (int r = 1; r <= static_cast<int>(maxRange); ++r) {
+        const float radius = static_cast<float>(r) * scale;
+        painter.drawEllipse(QPointF(0, 0), radius, radius);
     }
 
+    // 십자 기준선
+    painter.setPen(QPen(QColor(0x25, 0x25, 0x25), 1, Qt::DashLine));
+    painter.drawLine(QPointF(-drawableRadius, 0), QPointF(drawableRadius, 0));
+    painter.drawLine(QPointF(0, -drawableRadius), QPointF(0, drawableRadius));
 
-    // 라이다 데이터 포인트 (Obstacles)
-    painter.setPen(QPen(QColor("#ff3333"), 3.5)); // 장애물은 강렬한 빨간색 점
+    // ---------------------------------------------------------
+    // 4. LiDAR 포인트 표시
+    // ---------------------------------------------------------
+    painter.setPen(QPen(QColor(0xff, 0x33, 0x33), 4.0));
+
     for (const auto& point : scanData) {
-        if (point.range <= 0.1f || point.range > maxRange) continue;
-
-        // 극좌표 -> 직교좌표 변환
-        float x = point.range * cos(point.angle) * scale;
-        float y = -point.range * sin(point.angle) * scale;
+        const float x = point.range * std::cos(point.angle) * scale;
+        const float y = -point.range * std::sin(point.angle) * scale;
 
         painter.drawPoint(QPointF(x, y));
     }
 
     // ---------------------------------------------------------
-    // 중심부 센서 표시
+    // 5. 중심 센서 표시
     // ---------------------------------------------------------
-    painter.setBrush(Qt::green);
-    painter.setPen(Qt::NoPen);
-    painter.drawEllipse(QPointF(0, 0), 5, 5);
+    painter.setBrush(QColor(0x00, 0xff, 0x66));
+    painter.setPen(QPen(QColor(0xff, 0xff, 0xff), 1));
+    painter.drawEllipse(QPointF(0, 0), 6, 6);
+
+    // ---------------------------------------------------------
+    // 6. 상태 텍스트
+    // ---------------------------------------------------------
+    painter.resetTransform();
+
+    painter.setPen(QColor(0x8a, 0x8a, 0x9a));
+    QFont font = painter.font();
+    font.setPointSize(9);
+    font.setBold(true);
+    painter.setFont(font);
+
+    QString statusText = QString("LiDAR Points: %1").arg(scanData.size());
+    painter.drawText(
+        QRect(10, 10, widgetWidth - 20, 25),
+        Qt::AlignLeft | Qt::AlignVCenter,
+        statusText
+        );
 }

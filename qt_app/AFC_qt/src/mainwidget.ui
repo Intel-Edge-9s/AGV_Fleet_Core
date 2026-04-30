@@ -6,24 +6,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>500</height>
+    <width>1327</width>
+    <height>1075</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWidget</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QTabWidget" name="tabWidget">
-     <property name="styleSheet">
-      <string notr="true">/* ============================================================
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>9</y>
+     <width>1311</width>
+     <height>1061</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">/* ============================================================
    1. 전역 스타일 및 배경 설정
    ============================================================ */
 QWidget {
     background-color: #1b1e23;
     color: #d1d5db;
-    font-family: &quot;Segoe UI&quot;, &quot;Malgun Gothic&quot;, sans-serif;
+    font-family: &quot;Segoe UI&quot;, &quot;Malgun Gothic&quot;, &quot;Consolas&quot;, sans-serif;
     font-size: 13px;
 }
 
@@ -33,24 +39,25 @@ QWidget {
 QGroupBox {
     background-color: #242930;
     border: 1px solid #323842;
-    border-radius: 10px;
+    border-radius: 12px;
     margin-top: 25px;
-    font-weight: bold;
+    font-weight: 800;
+    letter-spacing: 1px;
 }
 
 QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 10px;
-    padding: 0 10px;
+    left: 15px;
+    padding: 0 12px;
     color: #00f2ff;
+    background-color: transparent;
 }
 
 QFrame {
     background-color: #2c313a;
     border: 1px solid #3e4451;
     border-radius: 8px;
-    padding: 5px;
 }
 
 QFrame:hover {
@@ -59,7 +66,35 @@ QFrame:hover {
 }
 
 /* ============================================================
-   3. 일반 버튼 디자인
+   3. 로봇 선택 타겟 셀렉터 (Target Selector)
+   ============================================================ */
+QRadioButton {
+    background-color: #313742;
+    color: #90a4ae;
+    border: 1px solid #3e4551;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: bold;
+    min-width: 80px;
+}
+
+QRadioButton::indicator {
+    width: 0px; 
+}
+
+QRadioButton:hover {
+    border: 1px solid #00f2ff;
+    color: white;
+}
+
+QRadioButton:checked {
+    background-color: #1e2e3a;
+    border: 2px solid #00f2ff;
+    color: #00f2ff;
+}
+
+/* ============================================================
+   4. 일반 및 제어 버튼 디자인
    ============================================================ */
 QPushButton {
     background-color: #313742;
@@ -81,57 +116,121 @@ QPushButton:pressed {
     color: #1b1e23;
 }
 
-/* 방향키 전용 (Object Name이 pPB로 시작) */
 QPushButton[objectName^=&quot;pPB&quot;] {
     background-color: #2c323d;
-    font-size: 16px;
-}
-
-/* ============================================================
-   4. 특수 버튼 (START &amp; STOP)
-   ============================================================ */
-#btnStartNavi {
-    background-color: #26c6da !important;
-    color: #1b1e23 !important;
-    border: 2px solid #00f2ff !important;
-    font-size: 14px;
-    font-weight: 800;
-}
-
-#btnStartNavi:hover {
-    background-color: #33e0f5 !important;
-    border: 2px solid #ffffff !important;
+    font-size: 15px;
+    border-radius: 8px;
 }
 
 #pPBStop {
     background-color: #3d2b2e;
-    border: 1px solid #ff4d4d;
+    border: 2px solid #ff4d4d;
     color: #ff4d4d;
+    font-weight: 900;
+}
+
+#pPBStop:hover {
+    background-color: #ff4d4d;
+    color: white;
 }
 
 /* ============================================================
-   5. 라벨 스타일 (일반 및 데이터 수치)
+   5. 물류 핵심 작업 및 자율주행 제어 버튼
    ============================================================ */
-/* [추가] 일반 라벨: 제목용 (로봇, 목적지, 충전소 등) */
+/* 적재 LOAD */
+QPushButton[objectName$=&quot;Load&quot;] {
+    border: 1px solid #00c853;
+    color: #00c853;
+    background-color: #1e2e26;
+    font-size: 14px;
+}
+
+QPushButton[objectName$=&quot;Load&quot;]:hover {
+    background-color: #00c853;
+    color: #1b1e23;
+}
+
+/* 하역 UNLOAD */
+QPushButton[objectName$=&quot;Unload&quot;] {
+    border: 1px solid #ffab00;
+    color: #ffab00;
+    background-color: #2e281e;
+    font-size: 14px;
+}
+
+QPushButton[objectName$=&quot;Unload&quot;]:hover {
+    background-color: #ffab00;
+    color: #1b1e23;
+}
+
+/* 자율주행 STOP 버튼 (강렬한 레드 테마) */
+#btnStopNavi {
+    background-color: #3d2b2e; /* 어두운 레드 배경 */
+    border: 2px solid #ff4d4d;
+    color: #ff4d4d;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+#btnStopNavi:hover {
+    background-color: #ff4d4d;
+    color: #ffffff;
+}
+
+#btnStopNavi:pressed {
+    background-color: #b33636;
+    color: #eceff1;
+}
+
+/* ============================================================
+   6. 라벨 스타일 및 데이터 박스 통합 (Voltage/Value)
+   ============================================================ */
 QLabel {
     qproperty-alignment: 'AlignCenter'; 
     font-weight: bold;
     color: #90a4ae; 
     margin-bottom: 5px;
     background-color: transparent;
+    border: none;
 }
 
-/* [유지] 데이터 수치 라벨 강조 (전압, 배터리 수치 등) */
-QLabel[objectName$=&quot;Value&quot;] {
+QLabel[objectName*=&quot;Voltage&quot;] {
     color: #00f2ff;
     font-family: &quot;Consolas&quot;, monospace;
-    font-size: 16px;
+}
+
+QLabel[objectName*=&quot;Value&quot;] {
+    color: #00f2ff;
+    font-family: &quot;Consolas&quot;, monospace;
+    font-size: 15px;
     font-weight: bold;
+    background-color: #121417;
+    border: 1px solid #323842;
+    border-radius: 6px;
+    padding: 5px;
+    min-height: 25px;
 }
 
 /* ============================================================
-   6. 기타 입력 위젯
+   7. 기타 입력 위젯 및 프로그레스 바
    ============================================================ */
+QCheckBox {
+    font-weight: bold;
+    color: #00f2ff;
+}
+
+QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #3e4551;
+    background-color: #1b1e23;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #00f2ff;
+}
+
 QComboBox {
     background-color: #1b1e23;
     border: 1px solid #3e4551;
@@ -140,57 +239,40 @@ QComboBox {
     color: #d1d5db;
 }
 
-QComboBox::drop-down {
-    border: none;
-}
-
 QProgressBar {
     background-color: #121417;
     border: 1px solid #323842;
-    border-radius: 4px;
+    border-radius: 6px;
     text-align: center;
     color: white;
+    font-weight: bold;
 }
 
 QProgressBar::chunk {
     background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                      stop:0 #00c6ff, stop:1 #00f2ff);
-    border-radius: 3px;
-}
-
-QCheckBox::indicator {
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    border: 1px solid #3e4551;
-}
-
-QCheckBox::indicator:checked {
-    background-color: #00f2ff;
-    border: 1px solid #00f2ff;
+                        stop:0 #00c6ff, stop:1 #00f2ff);
+    border-radius: 5px;
 }</string>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <widget class="QWidget" name="pTab1">
-      <attribute name="title">
-       <string>Tab 1</string>
-      </attribute>
-     </widget>
-     <widget class="QWidget" name="pTab2">
-      <attribute name="title">
-       <string>Tab 2</string>
-      </attribute>
-     </widget>
-     <widget class="QWidget" name="pTab3">
-      <attribute name="title">
-       <string>Tab 3</string>
-      </attribute>
-     </widget>
-    </widget>
-   </item>
-  </layout>
+   </property>
+   <property name="currentIndex">
+    <number>1</number>
+   </property>
+   <widget class="QWidget" name="pTab1">
+    <attribute name="title">
+     <string>로봇 관제</string>
+    </attribute>
+   </widget>
+   <widget class="QWidget" name="pTab2">
+    <attribute name="title">
+     <string>DB</string>
+    </attribute>
+   </widget>
+   <widget class="QWidget" name="pTab3">
+    <attribute name="title">
+     <string>Tab 3</string>
+    </attribute>
+   </widget>
+  </widget>
  </widget>
  <resources/>
  <connections/>
