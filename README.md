@@ -1,6 +1,13 @@
 ## 🚛 Logistics-Automation-Mini-Project
 
 ### 🛠 개발 배경
+<table>
+  <tr>
+    <td align="center"><img src="./다운로드/autonomous-mobile-robots-amr-marketsss.webp" width="100%" /></td>
+    <br><b>자율 이동 로봇 시장 규모 및 점유율 보고서, 2035년</b>
+    <td align="center"><img src="./다운로드/us-autonomous-mobile-robots-market-sizess.webp" width="100%" /></td>
+  </tr>
+</table>
 
 ### 📝 한 줄 요약
 
