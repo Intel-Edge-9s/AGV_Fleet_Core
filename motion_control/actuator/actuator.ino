@@ -8,7 +8,7 @@ void setup() {
   pinMode(DIR_PIN, OUTPUT);
   
   analogWrite(PWM_PIN, 0);
-}
+} 
 
 void loop() {
   // 적외선 센서에 물체가 감지되면 (LOW일 때 작동)
